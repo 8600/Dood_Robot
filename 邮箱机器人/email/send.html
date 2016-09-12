@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	<link href="css/mui.min.css" rel="stylesheet" />
+</head>
+<body>
+<div class="mui-inner-wrap">
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-btn mui-btn-link mui-pull-right">关闭</a>
+			<h1 class="mui-title">发邮件</h1>
+		</header>
+
+		<div id="offCanvasContentScroll" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div class="mui-input-row">
+					<label>收件人：</label>
+					<input id="Addressee" type="text" placeholder="lichen@126.com">
+				</div>
+				<div class="mui-input-row">
+					<label>主题：</label>
+					<input id="Theme" type="text" placeholder="Hellow">
+				</div>
+				<h5>正文：</h5>
+				<iframe src="umeditor.html" frameborder=0 style="width:100% ;height: 380px;"></iframe>
+
+				<div id="Login_box" class="Login_button_box">
+					<button id="Login_button" type="button" class="mui-btn mui-btn-block">发送</button>
+				</div>
+			</div>
+		</div>
+		<!-- off-canvas backdrop -->
+		<div class="mui-off-canvas-backdrop"></div>
+	</div>
+<script src="js/mui.min.js"></script>
+<script type="text/javascript">
+	(function($, doc) {
+		$.init();
+		function plusReady() {
+			var message = {"username": "","password": "","server": "qq.com","port": "993","command": "send","addressee": "","theme": "","text":""};
+			message.username = plus.storage.getItem("Account1");
+			message.password = plus.storage.getItem("Password1");
+			message.server = plus.storage.getItem("Server1");
+			document.getElementById("Login_button").addEventListener('tap', function() {
+				message.addressee = document.getElementById("Addressee").value;
+				var btnArray = ['否', '是'];
+				mui.confirm('确定要发送给'+message.addressee+'吗？', '发送邮件', btnArray, function(e) {
+					if(e.index == 1) {
+						message.theme = document.getElementById("Theme").value;
+						message.text =plus.storage.getItem("umeditorContent");
+						var success = function (response){
+							if(response.indexOf("250")>-1) {
+								alert("发送成功！");
+								plus.storage.setItem( "history", plus.storage.getItem("history")+"addressee["+message.addressee+"]text["+ message.text+"]3!2*;");
+							}
+							else alert("发送失败!");
+						};
+						$.post("http://115.28.168.147:3100/", JSON.stringify(message) , success, "html");
+					}
+				})
+			});
+		}
+		if(window.plus) {plusReady();}
+		else {document.addEventListener("plusready", plusReady, false);}
+
+		function setFocus() {
+			UM.getEditor('myEditor').focus();
+		}
+	})(mui, document);
+</script>
+</body>
+
+</html>

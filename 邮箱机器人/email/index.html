@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	<title></title>
+	<script src="js/mui.min.js"></script>
+	<script src="PUGE.js"></script>
+	<script type="text/javascript" src="common.js"></script>
+	<link href="css/mui.min.css" rel="stylesheet"/>
+	<link href="css/mui.picker.css" rel="stylesheet" />
+	<link href="css/mui.poppicker.css" rel="stylesheet" />
+	<style>
+		#showUserPicker,.mui-input-row input{
+			height: 50px;
+			text-align: center;
+		}
+		.mui-icon-eye{
+			top: 17px !important;
+			right: 10px !important;
+		}
+		.mui-input-row{
+			padding: 0 10px;
+			height: 65px;
+		}
+		.Login_button_box{
+			margin: 10px;
+		}
+		#account_box,#password_box{
+			width: 100%;
+		}
+		.zhan{
+			height: 45px;
+		}
+	</style>
+</head>
+<body>
+<header class="mui-bar mui-bar-nav">
+	<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+	<h1 class="mui-title">我的邮箱</h1>
+</header>
+<div id="landing" >
+	<div class="zhan"></div>
+	<div class="mui-content">
+		<div >
+			<h5 class="mui-content-padded">选择你的邮箱</h5>
+			<div id="picker_box"  class="mui-content-padded">
+				<button id='showUserPicker' class="mui-btn mui-btn-block" type='button'>QQ邮箱</button>
+				<div id='userResult' class="ui-alert"></div>
+			</div>
+		</div>
+		<h5 class="mui-content-padded">账号</h5>
+		<div id="account_box"  class="mui-input-row">
+			<!--
+            	<input id="account" type="text" class="mui-input" data-input-password="3" value="13720538066@126.com">
+            -->
+			<input id="account" type="text" class="mui-input" data-input-password="3" value="100284685@qq.com">
+			<label for="account"></label>
+		</div>
+
+		<h5 class="mui-content-padded">密码</h5>
+		<div id="password_box" class="mui-input-row mui-password">
+			<!--
+            	<input id="password" type="password" class="mui-input-password" data-input-password="3" value="pbhyxbvurjcrcahc">
+            -->
+			<input id="password" type="password" class="mui-input-password" data-input-password="3" value="pbhyxbvurjcrcahc">
+			<label for="password"></label>
+			<span class="mui-icon mui-icon-eye"></span>
+		</div>
+		<div id="Login_box" class="Login_button_box">
+			<button id="Login_button" type="button" class="mui-btn mui-btn-block">登陆</button>
+		</div>
+	</div>
+</div>
+
+<script src="js/mui.picker.min.js"></script>
+<script src="js/mui.poppicker.js"></script>
+<script>
+	(function($, doc) {
+		$.init();
+		$.ready(function() {
+			var userPicker = new $.PopPicker();
+			var message={"server":"qq.com","port":"993"};
+			userPicker.setData([{value: 'qq.com',text: 'QQ邮箱'}, {value: '126.com',text: '126邮箱'}, {value: '163.com',text: '163邮箱'}]);
+			var showUserPickerButton = doc.getElementById('showUserPicker');
+			var userResult = doc.getElementById('userResult');
+			showUserPickerButton.addEventListener('tap', function() {
+				userPicker.show(function(items) {
+					showUserPicker.innerText = items[0].text;
+					message.server = items[0].value;
+				});
+			}, false);
+			document.getElementById("Login_button").addEventListener('tap', function () {
+				message.username = document.getElementById("account").value;
+				message.password = document.getElementById("password").value;
+				plus.storage.setItem( "Account1", message.username );
+				plus.storage.setItem( "Password1", message.password );
+				plus.storage.setItem( "Server1", message.server );
+				window.location.href="unreadMail.html";
+			});
+		});
+	})(mui, document);
+</script>
+</body>
+<script type="text/javascript" src="immersed.js" ></script>
+</html>

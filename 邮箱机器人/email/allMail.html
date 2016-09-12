@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="css/mui.min.css" rel="stylesheet"/>
+	<script src="js/mui.min.js"></script>
+	<script src="PUGE.js"></script>
+	<script type="text/javascript" src="immersed.js" ></script>
+	<script type="text/javascript" src="common.js"></script>
+</head>
+<style>
+	.ghost{
+		width:160px;
+		margin:100px auto;
+		position:relative;
+		animation:ghostUpdown 1s infinite alternate;
+		-webkit-animation:ghostUpdown 1s infinite alternate;
+	}
+	.ghostBody{
+		width:140px;
+		height:180px;
+		background:#fff;
+		border-radius:100% 100% 0 0;
+		position:relative;
+	}
+	.ghostEye{
+		width:15px;
+		height:20px;
+		border-radius:100%;
+		border:2px solid #061E74;
+		background:#061E74;
+		box-shadow:inset -2px -2px #fff;
+		position:absolute;
+		top:60px;
+	}
+	.left{left:45px}  .right{right:50px;}  .ghostMouth{
+		width:15px;
+		height:20px;
+		border-radius:100%;
+		border:2px solid #061E74;
+		position:absolute;
+		top:90px;
+		left:70px;
+	}
+	.ghostWave{
+		position:absolute;
+		width: 140px;
+		height: 20px;
+		background-size:25px 20px;
+		background-image:radial-gradient(circle at 50% 0%,#fff,71%,transparent 71%);
+	}
+	.shadow{
+		width:140px;
+		height:10px;
+		border-radius:100%;
+		background:#061E74;
+		opacity:0.3;
+		margin-top:70px;
+		animation:shadow 1s infinite alternate;
+		-webkit-animation:shadow 1s infinite alternate;
+	}
+	@keyframes ghostUpdown{
+		from{margin-top:100px;}
+		to{margin-top:70px;}
+	}
+	@-webkit-keyframes ghostUpdown{
+		from{margin-top:100px;}
+		to{margin-top:70px;}
+	}
+	@keyframes shadow{
+		from{margin-top:70px;opacity:0.3;}
+		to{margin-top:100px;opacity:0.1;}
+	}
+	@-webkit-keyframes shadow{
+		from{margin-top:70px;opacity:0.3;}
+		to{margin-top:100px;opacity:0.1;}
+	}
+	.Title{
+		color: wheat;
+		height: 60px;
+		line-height: 60px;
+		font-size: 22px;
+		text-align: center;
+	}
+</style>
+<script>
+	(function($) {
+		function plusReady(){
+			document.getElementById("unsee").innerHTML=plus.storage.getItem("unsee");
+			var message = {"username":"","password":"","server":"qq.com","port":"993","command":"recent"};
+			message.username = plus.storage.getItem("Account1");
+			message.password = plus.storage.getItem("Password1");
+			if(message.username&&message.password){
+				var success = function (response) {
+					if (response.indexOf("发生错误")>=0){
+						
+						if(response.indexOf("Please using authorized code to login")>=0){
+							mui.alert('QQ邮箱限制第三方客户端登陆需要授权码,请点击确定转到腾讯帮助页面。', '请使用授权码登陆', function() {
+								window.location.href="http://service.mail.qq.com/cgi-bin/help?subtype=1&&id=28&&no=1001256";
+							});
+						}
+					}
+					else {
+						if(response){
+							plus.storage.setItem( "allsee_response", response );
+							relodeHtml(response,plus);
+						}
+						else{
+							mui.alert('登录失败，请重新尝试！', '登录失败', function() {
+								window.location.href="index.html";
+							});
+						}
+					}
+				};
+				if(plus.storage.getItem("allsee_response")) relodeHtml(plus.storage.getItem("allsee_response"),plus);	
+				else $.post("http://115.28.168.147:3100/", JSON.stringify(message) , success, "html");
+			}
+			else{
+				mui.alert('你还没有绑定邮箱！', '需要登陆', function() {
+					window.location.href="index.html";
+				});
+			}
+		}
+		if(window.plus){plusReady();}
+		else{document.addEventListener("plusready",plusReady,false);}
+	})(mui, document);
+	
+	function relodeHtml(response,plus){
+		hide_element(document.getElementById("loading"));
+		var subject = cut_string_array(response,"subject: [ '","' ]");
+		var from = cut_string_array(response,"from: [","]");
+		var data = cut_string_array(response,"date: [ '","' ]");
+		//取未读邮件数量角标
+		var allsee_emil=cut_string(response,"找到邮件数: ","[");
+		document.getElementById("allsee").innerHTML=allsee_emil;
+		plus.storage.setItem( "allsee", allsee_emil );				
+		var b =document.getElementById("mao");
+		for(var i in subject){
+			var a = document.createElement("div");
+			a.setAttribute("class", "mui-card");
+			a.innerHTML = '<div class="mui-card-header">发件人：'+from[i]+'</div><div class="mui-card-content"><div class="mui-card-content-inner">主题：'+subject[i]+'</div></div><div class="mui-card-footer">'+data[i]+'</div>';
+			insert_tag_after(a,b);
+		}
+	}
+</script>
+<body>
+<div id="offCanvasWrapper" class="mui-off-canvas-wrap mui-draggable">
+	<!--侧滑菜单部分-->
+	<aside id="offCanvasSide" class="mui-off-canvas-left">
+		<div id="offCanvasSideScroll" class="mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div class="Title" >导航</div>
+				<ul class="mui-table-view mui-table-view-chevron mui-table-view-inverted">
+					<li class="mui-table-view-cell">
+						<a href="send.html" class="mui-navigate-right">写邮件</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a class="mui-navigate-right">
+							全部邮件<span id="allsee" class="mui-badge mui-badge-primary">0</span>
+						</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a href="unreadMail.html" class="mui-navigate-right">
+							未读邮件<span id="unsee" class="mui-badge mui-badge-primary">0</span>
+						</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a class="mui-navigate-right">草稿箱</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a href="historyMail.html" class="mui-navigate-right">发送记录</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a class="mui-navigate-right">联系人</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</aside>
+	<!--主界面部分-->
+	<div class="mui-inner-wrap">
+		<header class="mui-bar mui-bar-nav">
+			<h1 class="mui-title">全部邮件</h1>
+			<a onclick="plus.storage.setItem( 'allsee_response', '' );location.reload();" class=" mui-btn mui-btn-link mui-pull-right">收取</a>
+		</header>
+
+		<div id="offCanvasContentScroll" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div id="loading" class="ghost">
+					<div class="ghostBody"></div>
+					<div class="ghostEye left"></div>
+					<div class="ghostEye right"></div>
+					<div class="ghostMouth"></div>
+					<div class="ghostWave"></div>
+					<div class="shadow"></div>
+				</div>
+
+				<div id="emil">
+					<h5 id="mao" class="mui-content-padded"></h5>
+				</div>
+			</div>
+		</div>
+		<!-- off-canvas backdrop -->
+		<div class="mui-off-canvas-backdrop"></div>
+	</div>
+</div>
+<script>
+	//侧滑容器父节点
+	var offCanvasWrapper = mui('#offCanvasWrapper');
+	//菜单容器
+	var offCanvasSide = document.getElementById("offCanvasSide");
+	if (!mui.os.android) {
+
+		var spans = document.querySelectorAll('.android-only');
+		for (var i = 0, len = spans.length; i < len; i++) {
+			spans[i].style.display = "none";
+		}
+	}
+
+	offCanvasWrapper[0].insertBefore(offCanvasSide, offCanvasWrapper[0].firstElementChild);
+	//主界面和侧滑菜单界面均支持区域滚动；
+	mui('#offCanvasSideScroll').scroll();
+	mui('#offCanvasContentScroll').scroll();
+	//实现ios平台原生侧滑关闭页面；
+	if (mui.os.plus && mui.os.ios) {
+		mui.plusReady(function() { //5+ iOS暂时无法屏蔽popGesture时传递touch事件，故该demo直接屏蔽popGesture功能
+			plus.webview.currentWebview().setStyle({
+				'popGesture': 'none'
+			});
+		});
+	}
+	
+</script>
+
+</body>
+
+
+</html>

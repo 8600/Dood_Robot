@@ -1,0 +1,86 @@
+{
+  "index.html": {
+    "resources": [
+      "js/mui.min.js",
+      "css/mui.min.css",
+      "js/mui.picker.min.js",
+      "js/mui.poppicker.js",
+      "fonts/mui.ttf",
+      "css/mui.poppicker.css",
+      "css/mui.picker.css",
+      "PUGE.js",
+      "immersed.js",
+      "land.html",
+      "common.js"
+    ],
+    "refer": [
+      "land.html"
+    ]
+  },
+  "land.html": {
+    "resources": [
+      "index.html",
+      "PUGE.js",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "immersed.js",
+      "css/mui.min.css",
+      "common.js",
+      "land.html",
+      "send.html",
+      "inbox.html"
+    ],
+    "refer": [
+      "index.html",
+      "send.html",
+      "inbox.html"
+    ]
+  },
+  "send.html": {
+    "resources": [
+      "umeditor.config.js",
+      "dialogs/link/link.js",
+      "lang/zh-cn/zh-cn.js",
+      "dialogs/image/image.js",
+      "lalla.html",
+      "third-party/jquery.min.js",
+      "themes/default/images/icons.png",
+      "dialogs/video/video.js",
+      "umeditor.min.js",
+      "land.html",
+      "dialogs/emotion/emotion.js",
+      "dialogs/formula/formula.js",
+      "dialogs/map/map.js",
+      "themes/default/css/umeditor.css",
+      "fonts/mui.ttf",
+      "js/mui.min.js",
+      "css/mui.min.css",
+      "umeditor.html",
+      "inbox.html"
+    ],
+    "refer": [
+      "land.html",
+      "inbox.html"
+    ]
+  },
+  "inbox.html": {
+    "resources": [
+      "land.html",
+      "send.html"
+    ],
+    "refer": [
+      "land.html",
+      "send.html"
+    ]
+  },
+  "unreadMail.html": {
+    "resources": [
+      "PUGE.js",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "immersed.js",
+      "css/mui.min.css",
+      "common.js"
+    ]
+  }
+}

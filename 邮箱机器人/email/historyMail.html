@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="css/mui.min.css" rel="stylesheet"/>
+	<script src="js/mui.min.js"></script>
+	<script src="PUGE.js"></script>
+	<script type="text/javascript" src="immersed.js" ></script>
+	<script type="text/javascript" src="common.js"></script>
+	<style>
+	.title{
+		color: wheat;
+		height: 60px;
+		line-height: 60px;
+		font-size: 22px;
+		text-align: center;
+	}
+	</style>
+</head>
+<script>
+	(function($) {
+		function plusReady(){
+			document.getElementById("allsee").innerHTML=plus.storage.getItem("allsee");
+			document.getElementById("unsee").innerHTML=plus.storage.getItem("unsee");
+			var History = plus.storage.getItem('history');
+			var subject = cut_string_array(History,"addressee[","]text");
+			var e_html = cut_string_array(History,"text[","]3!2*");
+			var b =document.getElementById("mao");
+			for(var i in subject){
+				var a = document.createElement("div");
+				a.setAttribute("class", "mui-card");
+				a.innerHTML = '<div class="mui-card-header">收件人：'+subject[i]+'</div><div class="mui-card-content"><div class="mui-card-content-inner">'+e_html[i]+'</div></div><div class="mui-card-footer">'+"2016年6月6日"+'</div>';
+				insert_tag_after(a,b);
+			}
+		}
+		if(window.plus){plusReady();}
+		else{document.addEventListener("plusready",plusReady,false);}
+	})(mui, document);
+	
+	function relodeHtml(response,plus){
+		hide_element(document.getElementById("loading"));
+		var subject = cut_string_array(response,"subject: [ '","' ]");
+		var data = cut_string_array(response,"date: [ '","' ]");
+		var e_html = cut_string_array(response,"邮件内容:［","]");
+		//设置未读邮件数量角标
+		var unsee_number = cut_string(response,"找到邮件数: ","[")
+		document.getElementById("unsee").innerHTML=unsee_number;
+		plus.storage.setItem( "unsee", unsee_number );
+		document.getElementById("allsee").innerHTML=plus.storage.getItem("allsee");
+		var b =document.getElementById("mao");
+		for(var i in subject){
+			var a = document.createElement("div");
+			a.setAttribute("class", "mui-card");
+			a.innerHTML = '<div class="mui-card-header">'+subject[i]+'</div><div class="mui-card-content"><div class="mui-card-content-inner">'+e_html[i]+'</div></div><div class="mui-card-footer">'+data[i]+'</div>';
+			insert_tag_after(a,b);
+		}
+	}
+</script>
+<body>
+<div id="offCanvasWrapper" class="mui-off-canvas-wrap mui-draggable">
+	<!--侧滑菜单部分-->
+	<aside id="offCanvasSide" class="mui-off-canvas-left">
+		<div id="offCanvasSideScroll" class="mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div class="title">导航</div>
+				<ul class="mui-table-view mui-table-view-chevron mui-table-view-inverted">
+					<li class="mui-table-view-cell">
+						<a href="send.html" class="mui-navigate-right">写邮件</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a href="allMail.html" class="mui-navigate-right">
+							全部邮件<span id="allsee" class="mui-badge mui-badge-primary">0</span>
+						</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a href="unreadMail.html"  class="mui-navigate-right">
+							未读邮件<span id="unsee" class="mui-badge mui-badge-primary">0</span>
+						</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a class="mui-navigate-right">草稿箱</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a href="historyMail.html" class="mui-navigate-right">发送记录</a>
+					</li>
+					<li class="mui-table-view-cell">
+						<a class="mui-navigate-right">联系人</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</aside>
+	<!--主界面部分-->
+	<div class="mui-inner-wrap">
+		<header class="mui-bar mui-bar-nav">
+			<h1 class="mui-title">发件记录</h1>
+			<a onclick="" class=" mui-btn mui-btn-link mui-pull-right">清空</a>
+		</header>
+
+		<div id="offCanvasContentScroll" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div id="emil">
+					<h5 id="mao" class="mui-content-padded"></h5>
+				</div>
+			</div>
+		</div>
+		<!-- off-canvas backdrop -->
+		<div class="mui-off-canvas-backdrop"></div>
+	</div>
+</div>
+<script>
+	//侧滑容器父节点
+	var offCanvasWrapper = mui('#offCanvasWrapper');
+	//菜单容器
+	var offCanvasSide = document.getElementById("offCanvasSide");
+	if (!mui.os.android) {
+		var spans = document.querySelectorAll('.android-only');
+		for (var i = 0, len = spans.length; i < len; i++) {
+			spans[i].style.display = "none";
+		}
+	}
+	offCanvasWrapper[0].insertBefore(offCanvasSide, offCanvasWrapper[0].firstElementChild);
+	//主界面和侧滑菜单界面均支持区域滚动；
+	mui('#offCanvasSideScroll').scroll();
+	mui('#offCanvasContentScroll').scroll();
+	//实现ios平台原生侧滑关闭页面；
+	if (mui.os.plus && mui.os.ios) {
+		mui.plusReady(function() { //5+ iOS暂时无法屏蔽popGesture时传递touch事件，故该demo直接屏蔽popGesture功能
+			plus.webview.currentWebview().setStyle({
+				'popGesture': 'none'
+			});
+		});
+	}
+</script>
+</body>
+</html>
