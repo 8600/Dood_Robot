@@ -2,6 +2,9 @@
 const http = require("http"); //提供web服务  
 const query = require("querystring"); //解析POST请求
 const Imap = require('imap');
+const mongodb = require('mongodb');
+const dbserver  = new mongodb.Server('127.0.0.1', 27017, {auto_reconnect:true});
+const db = new mongodb.Db('mydb', dbserver, {safe:true});
 const access_token ="-jhO9b6XQFyg963BZte5KJBH1IW5x6ynGzFrquN706gXCLs6_QjfnerQnxvIv8mnalbvubn513KTh0XdT6OFZRLwiuDqL_bO7GmTfVJF0zc&device_type=2";
  
 function sendMessage(UserID,echo,access_token){
@@ -63,7 +66,72 @@ function echo(UserID,ReceiveMessage){
     getreq.on('error',function(e) {console.log('problem with request: ' + e.message);});
     getreq.end();
 }
-
+//已经绑定用户
+function emilUser(UserID){
+    db.open(function(err, db){
+        if(err!==null) {sendMessage(UserID,err,access_token);}
+        else{
+            db.createCollection('mailRobot', {safe:true}, function(err, collection){
+                collection.find({"UserID":UserID}).toArray(function(err,docs){
+                    if(docs[0]){
+                        receive(UserID,docs[0].account,docs[0].password);
+                    }
+                });
+            });
+        }
+    });
+}
+//新增加邮箱用户
+function addEmilUser(UserID,account,password){
+    db.open(function(err, db){
+        if(err!==null) {sendMessage(UserID,err,access_token);}
+        else{
+            db.createCollection('mailRobot', {safe:true}, function(err, collection){
+                if(err!==null) {sendMessage(UserID,err,access_token);}
+                else{
+                    let mailJson = {"UserID":UserID,"account":account,"password":password};
+                    collection.find(mailJson).toArray(function(err,docs){
+                        if(!docs[0]){
+                            collection.insert(mailJson,{safe:true},function(err, result){
+                                console.log(result);
+                            });
+                        }
+                    }); 
+                    db.close();
+                }
+            });
+        }
+    });
+    receive(UserID,account,password);
+}
+//收到其他命令的判断
+function otherCommand(ReceiveMessage,UserID){
+    if (ReceiveMessage.indexOf("&&")>-1){
+        let account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("&&"));
+        let password = ReceiveMessage.substring(ReceiveMessage.indexOf("&&")+2);
+        addEmilUser(UserID,account,password);
+    }
+    else{
+        echo(UserID,ReceiveMessage);
+    }
+}
+//返回有多少个收取邮件
+function emilNumber(UserID){
+    db.open(function(err, db){
+        if(err!==null) {sendMessage(UserID,err,access_token);}
+        else{
+            db.createCollection('mailRobot', {safe:true}, function(err, collection){
+                if(err!==null) {sendMessage(UserID,err,access_token);}
+                else{
+                    collection.find({}).toArray(function(err,docs){
+                        sendMessage(UserID,'邮件收取数: ' + docs.length,access_token);
+                    }); 
+                    db.close();
+                }
+            });
+        }
+    });
+}
 const server = function(request, response) {
     response.writeHead(200, {"Content-Type": "text/json"});
     if (request.method === "GET") { response.write("豆豆机器人！"); response.end();} 
@@ -76,13 +144,10 @@ const server = function(request, response) {
             let[UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
             //显示谁发来了什么消息
             console.log(UserID + "发来消息：" + ReceiveMessage);
-            if (ReceiveMessage.indexOf("&&")>-1){
-                let account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("&&"));
-                let password = ReceiveMessage.substring(ReceiveMessage.indexOf("&&")+2);
-                receive(UserID,account,password);
-            }
-            else{
-                echo(UserID,ReceiveMessage);
+            switch(ReceiveMessage){
+                case "收邮件":emilUser(UserID);break;
+                case "邮件收取数量":emilNumber(UserID);break;
+                default:otherCommand(ReceiveMessage,UserID);
             }
             response.end();
         });
