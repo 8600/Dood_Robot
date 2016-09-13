@@ -12,6 +12,7 @@ function sendMessage(UserID,echo,access_token){
     Request.end();
 }
 
+
 //接收邮件处理进程receive mail
 function receive(UserID,account,password) {
     //处理消息的函数
@@ -19,7 +20,7 @@ function receive(UserID,account,password) {
         const imap = new Imap({
             user: account,
             password: password,
-            host: "imap." + "qq.com",
+            host: "imap." + UserID.substring(UserID.indexOf("&&")+2),
             port: 993,
             tls: parseInt(account)
         });
@@ -53,7 +54,6 @@ function echo(UserID,ReceiveMessage){
         path: '/openapi/api?key=bb1b96a394b19b8ce2c61cf32c64d695&userid=' + UserID + '&info=' + encodeURI(ReceiveMessage),
         method: 'GET'
     };
-
     let getreq = http.request(tulingAPI,function(res) {
         res.setEncoding('utf8');
         res.on('data',function(chunk) {
