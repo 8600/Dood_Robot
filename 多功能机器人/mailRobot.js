@@ -20,7 +20,7 @@ function receive(UserID,account,password) {
         const imap = new Imap({
             user: account,
             password: password,
-            host: "imap." + UserID.substring(UserID.indexOf("&&")+2),
+            host: "imap." + account.substring(account.indexOf("@")+1),
             port: 993,
             tls: parseInt(account)
         });
