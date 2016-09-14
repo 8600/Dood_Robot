@@ -1,0 +1,55 @@
+"use strict";
+const http = require("http"); //提供web服务  
+const query = require("querystring"); //解析POST请求
+const mail = require("./mail");
+const send = require("./send");
+const storage = require("./storage");
+const data = new storage();
+
+//智能对话
+function echo(UserID,ReceiveMessage){
+    const tulingAPI={hostname: data.tuLingHost ,port: 80,path: data.tuLingPath + UserID + '&info=' + encodeURI(ReceiveMessage),method: 'GET'};
+    const getreq = http.request(tulingAPI,function(res) {
+        res.setEncoding('utf8');
+        res.on('data',function(chunk) {send.sendToDood(UserID,JSON.parse(chunk).text,data.access_token);});
+    });
+    getreq.on('error',function(e) {console.log('problem with request: ' + e.message);});
+    getreq.end();
+}
+
+//收到其他命令的判断
+function otherCommand(ReceiveMessage,UserID){
+    if (ReceiveMessage.indexOf("##")>-1){
+        const account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
+        const password = ReceiveMessage.substring(ReceiveMessage.indexOf("##")+2);
+        mail.addEmilUser(UserID,account,password);
+    }
+    else echo(UserID,ReceiveMessage);
+}
+
+
+const server = function(request, response) {
+    response.writeHead(200, {"Content-Type": "text/json"});
+    if (request.method === "GET") { response.write("豆豆机器人！"); response.end();} 
+    else {
+        let postdata = "";
+        request.addListener("data",function(postchunk) { postdata += postchunk;});
+        request.addListener("end",function() {
+            const Receive = JSON.parse(query.parse(postdata).msg);
+            const [UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
+            //显示谁发来了什么消息
+            console.log(UserID + "发来消息：" + ReceiveMessage);
+            switch(ReceiveMessage){
+                case "收邮件":mail.emilUser(UserID);break;
+                case "邮件收取数量":mail.emilNumber(UserID);break;
+                case "查询关联":mail.queryAssociation(UserID);break;
+                case "解除关联":mail.relieveAssociation(UserID);break;
+                default:otherCommand(ReceiveMessage,UserID);
+            }
+            response.end();
+        });
+    }
+};
+
+http.createServer(server).listen(3000);
+console.log("服务已经开启!");
