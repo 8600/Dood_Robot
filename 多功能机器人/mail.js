@@ -104,7 +104,7 @@ exports.emilNumber = function (UserID){
 exports.emilUser = function (UserID){
     const fun=function(response){
         if(response[0])receive(UserID,response[0].account,response[0].password);
-        else send.sendToDood(UserID,"你还没有绑定邮箱\r\n绑定邮箱请回复您的邮箱账号##您的邮箱专属密码\r\n例：123456@qq.com##123456789",data.access_token);
+        else send.sendToDood(UserID,data.needToBind,data.access_token);
     };
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
