@@ -15,6 +15,24 @@ function sendMessage(UserID,echo,access_token){
     Request.end();
 }
 
+//查询数据库
+function findMongoDB(UserID,findJson,fun){
+    db.open(function(err, db){
+        if(err!==null) sendMessage(UserID,err,access_token);
+        else{
+            db.createCollection('mailRobot', {safe:true}, function(err, collection){
+                if(err!==null) sendMessage(UserID,err,access_token);
+                else{
+                    collection.find(findJson).toArray(function(err,docs){
+                        if(err!==null) sendMessage(UserID,err,access_token);
+                        else fun(docs);
+                    }); 
+                    db.close();
+                }
+            });
+        }
+    });
+}
 
 //接收邮件处理进程receive mail
 function receive(UserID,account,password) {
@@ -31,10 +49,10 @@ function receive(UserID,account,password) {
         function openInbox(cb) {imap.openBox('INBOX', true, cb);}
         imap.once('ready', function () {
             openInbox(function (err) {
-                if (err) console.log("发生错误：" + err);
+                if (err) sendMessage(UserID,"发生错误：" + err,access_token);
                 else{
                     imap.search(["UNSEEN"], function (err, results) {
-                        if (err) console.log("发生错误：" + err);
+                        if (err) sendMessage(UserID,"发生错误：" + err,access_token);
                         else{
                             sendMessage(UserID,'未读邮件数: ' + results.length,access_token);
                         }
@@ -42,8 +60,7 @@ function receive(UserID,account,password) {
                 }
             });
         });
-        imap.once('error', function (err) { console.log("发生错误：" + err);});
-        imap.once('end', function () { console.log("收取结束！"); });
+        imap.once('error', function (err) { sendMessage(UserID,"发生错误：" + err,access_token);});
         imap.connect();
     }
     receive_mail();
@@ -57,7 +74,7 @@ function echo(UserID,ReceiveMessage){
         path: '/openapi/api?key=bb1b96a394b19b8ce2c61cf32c64d695&userid=' + UserID + '&info=' + encodeURI(ReceiveMessage),
         method: 'GET'
     };
-    let getreq = http.request(tulingAPI,function(res) {
+    const getreq = http.request(tulingAPI,function(res) {
         res.setEncoding('utf8');
         res.on('data',function(chunk) {
              sendMessage(UserID,JSON.parse(chunk).text,access_token);
@@ -66,6 +83,7 @@ function echo(UserID,ReceiveMessage){
     getreq.on('error',function(e) {console.log('problem with request: ' + e.message);});
     getreq.end();
 }
+
 //已经绑定用户
 function emilUser(UserID){
     db.open(function(err, db){
@@ -76,11 +94,13 @@ function emilUser(UserID){
                     if(docs[0]){
                         receive(UserID,docs[0].account,docs[0].password);
                     }
+                    db.close();
                 });
             });
         }
     });
 }
+
 //新增加邮箱用户
 function addEmilUser(UserID,account,password){
     db.open(function(err, db){
@@ -89,7 +109,7 @@ function addEmilUser(UserID,account,password){
             db.createCollection('mailRobot', {safe:true}, function(err, collection){
                 if(err!==null) {sendMessage(UserID,err,access_token);}
                 else{
-                    let mailJson = {"UserID":UserID,"account":account,"password":password};
+                    const mailJson = {"UserID":UserID,"account":account,"password":password};
                     collection.find(mailJson).toArray(function(err,docs){
                         if(!docs[0]){
                             collection.insert(mailJson,{safe:true},function(err, result){
@@ -104,34 +124,35 @@ function addEmilUser(UserID,account,password){
     });
     receive(UserID,account,password);
 }
+
 //收到其他命令的判断
 function otherCommand(ReceiveMessage,UserID){
     if (ReceiveMessage.indexOf("&&")>-1){
-        let account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("&&"));
-        let password = ReceiveMessage.substring(ReceiveMessage.indexOf("&&")+2);
+        const account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("&&"));
+        const password = ReceiveMessage.substring(ReceiveMessage.indexOf("&&")+2);
         addEmilUser(UserID,account,password);
     }
     else{
         echo(UserID,ReceiveMessage);
     }
 }
+
 //返回有多少个收取邮件
 function emilNumber(UserID){
-    db.open(function(err, db){
-        if(err!==null) {sendMessage(UserID,err,access_token);}
-        else{
-            db.createCollection('mailRobot', {safe:true}, function(err, collection){
-                if(err!==null) {sendMessage(UserID,err,access_token);}
-                else{
-                    collection.find({}).toArray(function(err,docs){
-                        sendMessage(UserID,'邮件收取数: ' + docs.length,access_token);
-                    }); 
-                    db.close();
-                }
-            });
-        }
-    });
+    const fun=function(response){
+        sendMessage(UserID,'邮件收取数: ' + response.length,access_token);
+    };
+    findMongoDB(UserID,{"UserID":UserID},fun);
 }
+
+//返回豆豆ID绑定的邮箱账户和密码
+function queryAssociation(UserID){
+    const fun=function(response){
+        sendMessage(UserID,"账号:"+response[0].account+"\r\n密码:"+response[0].password,access_token);
+    };
+    findMongoDB(UserID,{"UserID":UserID},fun);
+}
+
 const server = function(request, response) {
     response.writeHead(200, {"Content-Type": "text/json"});
     if (request.method === "GET") { response.write("豆豆机器人！"); response.end();} 
@@ -139,14 +160,14 @@ const server = function(request, response) {
         let postdata = "";
         request.addListener("data",function(postchunk) { postdata += postchunk;});
         request.addListener("end",function() {
-            let Receive = query.parse(postdata);
-            Receive=JSON.parse(Receive.msg);
-            let[UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
+            const Receive = JSON.parse(query.parse(postdata).msg);
+            const [UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
             //显示谁发来了什么消息
             console.log(UserID + "发来消息：" + ReceiveMessage);
             switch(ReceiveMessage){
                 case "收邮件":emilUser(UserID);break;
                 case "邮件收取数量":emilNumber(UserID);break;
+                case "查询关联":queryAssociation(UserID);break;
                 default:otherCommand(ReceiveMessage,UserID);
             }
             response.end();
