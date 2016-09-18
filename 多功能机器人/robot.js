@@ -44,6 +44,7 @@ const server = function(request, response) {
                 case "邮件收取数量":mail.emilNumber(UserID);break;
                 case "查询关联":mail.queryAssociation(UserID);break;
                 case "解除关联":mail.relieveAssociation(UserID);break;
+                case "定时开关":mail.timedTask(UserID);break;
                 default:otherCommand(ReceiveMessage,UserID);
             }
             response.end();

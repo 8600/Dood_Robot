@@ -131,5 +131,34 @@ exports.addEmilUser = function (UserID,account,password){
             });
         }
     });
+    findMongoDB(UserID);
     receive(UserID,account,password);
+};
+
+exports.timedTask = function(UserID){
+    if(UserID!==data.admin) return null;
+    if(data.timedTask){
+        clearInterval(data.Interval);
+        data.timedTask = false;
+        send.sendToDood(data.admin,"自动收取功能已关闭！",data.access_token);
+    }
+    else{
+        const timeoutTime = 60000*data.timeoutTime;
+        //定时收取邮件的核心内容
+        const loop = function(){
+            const fun=function(response){
+                if(response[0]){
+                    //解密密码
+                    const password = CryptoJS.AES.decrypt(response[0].password, data.key).toString(CryptoJS.enc.Utf8);
+                    receive(UserID,response[0].account,password);
+                }
+                else send.sendToDood(UserID,data.needToBind,data.access_token);
+            };
+            findMongoDB(UserID,{"subscribe":"yes"},fun);
+            console.log("timed out!");
+        };
+        data.Interval = setInterval(loop, timeoutTime);
+        data.timedTask = true;
+        send.sendToDood(data.admin,"自动收取功能已开启！",data.access_token);
+    }
 };
