@@ -20,7 +20,7 @@ function echo(UserID,ReceiveMessage){
 //收到其他命令的判断
 function otherCommand(ReceiveMessage,UserID){
     if (ReceiveMessage.indexOf("##")>-1){
-        const account =ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
+        const account = ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
         const password = ReceiveMessage.substring(ReceiveMessage.indexOf("##")+2);
         mail.addEmilUser(UserID,account,password);
     }

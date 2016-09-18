@@ -6,6 +6,7 @@ const Imap = require('imap');
 const send = require("./send");
 const storage = require("./storage");
 const data = new storage();
+const CryptoJS = require("crypto-js");
 
 //查询数据库
 function findMongoDB(UserID,findJson,fun){
@@ -17,7 +18,7 @@ function findMongoDB(UserID,findJson,fun){
                 else{
                     collection.find(findJson).toArray(function(err,docs){
                         if(err!==null) send.sendToDood(UserID,err,data.access_token);
-                        else fun(docs);
+                        else fun (docs);
                     }); 
                     dataBase.close();
                 }
@@ -58,11 +59,17 @@ function receive(UserID,account,password) {
     receive_mail();
 }
 
+//已经绑定用户
 exports.emilUser = function (UserID) {
     const fun=function(response){
-        if(response[0])receive(UserID,response[0].account,response[0].password);
+        if(response[0]){
+            //解密密码
+            const password = CryptoJS.AES.decrypt(response[0].password, data.key).toString(CryptoJS.enc.Utf8);
+            receive(UserID,response[0].account,password);
+        }
         else send.sendToDood(UserID,data.needToBind,data.access_token);
     };
+    //通过UserID找用户邮箱账号密码
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
 
@@ -100,14 +107,6 @@ exports.emilNumber = function (UserID){
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
 
-//已经绑定用户
-exports.emilUser = function (UserID){
-    const fun=function(response){
-        if(response[0])receive(UserID,response[0].account,response[0].password);
-        else send.sendToDood(UserID,data.needToBind,data.access_token);
-    };
-    findMongoDB(UserID,{"UserID":UserID},fun);
-};
 
 //新增加邮箱用户
 exports.addEmilUser = function (UserID,account,password){
@@ -117,6 +116,8 @@ exports.addEmilUser = function (UserID,account,password){
             dataBase.createCollection('mailRobot', {safe:true}, function(err, collection){
                 if(err!==null) {send.sendToDood(UserID,err,data.access_token);}
                 else{
+                    //加密存储密码
+                    password = CryptoJS.AES.encrypt(password,data.key).toString();
                     const mailJson = {"UserID":UserID,"account":account,"password":password,"subscribe":"yes"};
                     collection.find(mailJson).toArray(function(err,docs){
                         if(!docs[0]){
