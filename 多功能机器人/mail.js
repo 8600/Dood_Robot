@@ -28,7 +28,7 @@ function findMongoDB(UserID,findJson,fun){
 }
 
 //接收邮件处理进程receive mail
-function receive(UserID,account,password) {
+function receive(UserID,account,password,beSureToRemind) {
     //处理消息的函数
     function receive_mail() {
         const imap = new Imap({
@@ -47,7 +47,7 @@ function receive(UserID,account,password) {
                     imap.search(["UNSEEN"], function (err, results) {
                         if (err) send.sendToDood(UserID,"发生错误：" + err,data.access_token);
                         else{
-                            send.sendToDood(UserID,'未读邮件数: ' + results.length ,data.access_token);
+                            if (beSureToRemind||results.length) send.sendToDood(UserID,'未读邮件数: ' + results.length ,data.access_token);
                         }
                     });
                 }
@@ -65,7 +65,7 @@ exports.emilUser = function (UserID) {
         if(response[0]){
             //解密密码
             const password = CryptoJS.AES.decrypt(response[0].password, data.key).toString(CryptoJS.enc.Utf8);
-            receive(UserID,response[0].account,password);
+            receive(UserID,response[0].account,password,true);
         }
         else send.sendToDood(UserID,data.needToBind,data.access_token);
     };
@@ -148,14 +148,15 @@ exports.timedTask = function(UserID){
         const loop = function(){
             const fun=function(response){
                 if(response[0]){
-                    //解密密码
-                    const password = CryptoJS.AES.decrypt(response[0].password, data.key).toString(CryptoJS.enc.Utf8);
-                    receive(UserID,response[0].account,password);
+                    response.forEach(function (filename) {
+                        //解密密码
+                        const password = CryptoJS.AES.decrypt(filename.password, data.key).toString(CryptoJS.enc.Utf8);
+                        receive(UserID,filename.account,password,false);
+                    });
                 }
                 else send.sendToDood(UserID,data.needToBind,data.access_token);
             };
             findMongoDB(UserID,{"subscribe":"yes"},fun);
-            console.log("timed out!");
         };
         data.Interval = setInterval(loop, timeoutTime);
         data.timedTask = true;
