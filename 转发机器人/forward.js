@@ -11,7 +11,7 @@ function sendToDood(UserID,echo){
     Request.end();
 }
 
-const server = function(request,response){  
+const server = function(request,response){
     response.writeHead(200,{"Content-Type":"text/json"});
     if(request.method === "GET"){
         response.write("收到GET请求");
@@ -24,12 +24,12 @@ const server = function(request,response){
         });
         request.addListener("end",function(){
             const Receive = JSON.parse(Query.parse(postdata).msg);
-            const [UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
+            const [UserID,ReceiveMessage]=[Receive.receTargetID, Receive.message ];
             sendToDood(UserID,ReceiveMessage);
-            response.end();   
+            response.end();
         });
     }
 };
 
-Http.createServer(server).listen(3002);  
-console.log("正在监听!");  
+Http.createServer(server).listen(3002);
+console.log("正在监听!");

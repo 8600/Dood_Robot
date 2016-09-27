@@ -1,5 +1,5 @@
 "use strict";
-const http = require("http"); //提供web服务  
+const http = require("http"); //提供web服务
 const query = require("querystring"); //解析POST请求
 const mail = require("./mail");
 const send = require("./send");
@@ -30,22 +30,25 @@ function otherCommand(ReceiveMessage,UserID){
 
 const server = function(request, response) {
     response.writeHead(200, {"Content-Type": "text/json"});
-    if (request.method === "GET") { response.write("豆豆机器人！"); response.end();} 
+    if (request.method === "GET") { response.write("豆豆机器人！"); response.end();}
     else {
         let postdata = "";
         request.addListener("data",function(postchunk) { postdata += postchunk;});
         request.addListener("end",function() {
             const Receive = JSON.parse(query.parse(postdata).msg);
-            const [UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message.body ];
-            //显示谁发来了什么消息
-            console.log(UserID + "发来消息：" + ReceiveMessage);
-            switch(ReceiveMessage){
-                case "收邮件":mail.emilUser(UserID);break;
-                case "邮件收取数量":mail.emilNumber(UserID);break;
-                case "查询关联":mail.queryAssociation(UserID);break;
-                case "解除关联":mail.relieveAssociation(UserID);break;
-                case "定时开关":mail.timedTask(UserID);break;
-                default:otherCommand(ReceiveMessage,UserID);
+            console.log(query.parse(postdata));
+            const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message.body, Receive.receTargetID];
+            if(receTargetID === "4328613733") {
+                //显示谁发来了什么消息
+                console.log(UserID + "发来消息：" + ReceiveMessage);
+                switch(ReceiveMessage){
+                    case "收邮件":mail.emilUser(UserID);break;
+                    case "邮件收取数量":mail.emilNumber(UserID);break;
+                    case "查询关联":mail.queryAssociation(UserID);break;
+                    case "解除关联":mail.relieveAssociation(UserID);break;
+                    case "定时开关":mail.timedTask(UserID);break;
+                    default:otherCommand(ReceiveMessage,UserID);
+                }
             }
             response.end();
         });
