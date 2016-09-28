@@ -9,6 +9,6 @@ module.exports = function() {
     this.key = "xUt9PvqiAMiBTVq4";//修改此项会导致数据库以前存储过的密码不可用
     //＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
     this.timedTask = false;
-    this.timeoutTime = 1;//定时收取间隔（分钟）
+    this.timeoutTime = 10;//定时收取间隔（分钟）
     this.Interval = null;
 };

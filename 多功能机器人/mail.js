@@ -48,7 +48,7 @@ function processing_message(UserID,message, imap,mailNumber,sendMessage) {
         msg.on('body', function (stream, info) {
             //正文内容的处理
             let buffer = ""; Number--;
-            if (info.which === 'TEXT') { console.log ('邮件内容:'+inspect(info.which)+', 总长度：'+info.size); }
+            if (info.which === 'TEXT') { console.log (`邮件内容${inspect(info.which)}, 总长度：${info.size}`); }
             stream.on('data', function (chunk) { buffer += chunk.toString('utf8');});
             stream.once('end', function () {
                 if (info.which !== 'TEXT') { 
@@ -60,13 +60,13 @@ function processing_message(UserID,message, imap,mailNumber,sendMessage) {
                         send.sendToDood(UserID,sendMessage,data.access_token);
                     }
                 }
-                else console.log('消息主体: [%s] 加载完毕', inspect(info.which));
+                else console.log(`消息主体:${inspect(info.which)}加载完毕`);
             });
         });
     });
 
     message.once('error', function (err) {
-        console.log('关闭邮件发生错误: ' + err);
+        console.log(`关闭邮件发生错误:${err}`);
     });
 
     message.once('end', function () {
@@ -83,20 +83,20 @@ function receive(UserID,account,password,beSureToRemind) {
         function openInbox(cb) {imap.openBox('INBOX', true, cb);}
         imap.once('ready', function () {
             openInbox(function (err) {
-                if (err) send.sendToDood(UserID,"发生错误：" + err,data.access_token);
+                if (err) send.sendToDood(UserID,`发生错误：${err}`,data.access_token);
                 else{
                     imap.search(["UNSEEN"], function (err, results) {
-                        if (err) send.sendToDood(UserID,"发生错误：" + err,data.access_token);
+                        if (err) send.sendToDood(UserID,`发生错误：${err}`,data.access_token);
                         else{
                             let mailNumber = results.length;
-                            let sendMessage = "未读邮件数："+mailNumber+"\r\n----------------------------------\r\n";
+                            let sendMessage = `未读邮件数：${mailNumber}\r\n----------------------------------\r\n`;
                             if (beSureToRemind || mailNumber) {
                                 if (mailNumber){
                                     const message = imap.fetch(results, { bodies: '', markSeen: true });
                                     processing_message(UserID,message,imap,mailNumber,sendMessage);//对得到的数据处理
                                 }
                                 else{
-                                    send.sendToDood(UserID,'未读邮件数: ' + mailNumber ,data.access_token);
+                                    send.sendToDood(UserID,`未读邮件数: ${mailNumber}` ,data.access_token);
                                 }
                             }
                         }
@@ -104,7 +104,7 @@ function receive(UserID,account,password,beSureToRemind) {
                 }
             });
         });
-        imap.once('error', function (err) { send.sendToDood(UserID,"发生错误：" + err,data.access_token);});
+        imap.once('error', function (err) { send.sendToDood(UserID,`发生错误：${err}`,data.access_token);});
         imap.connect();
     }
     receive_mail();
@@ -117,7 +117,6 @@ exports.emilUser = function (UserID) {
             //解密密码
             const password = CryptoJS.AES.decrypt(response[0].password, data.key).toString(CryptoJS.enc.Utf8);
             receive(UserID,response[0].account,password,true);
-
         }
         else send.sendToDood(UserID,data.needToBind,data.access_token);
     };
@@ -147,7 +146,7 @@ exports.relieveAssociation = function (UserID){
 //返回豆豆ID绑定的邮箱账户和密码
 exports.queryAssociation = function (UserID){
     const fun=function(response){
-        send.sendToDood(UserID,"账号:"+response[0].account+"\r\n密码:"+response[0].password,data.access_token);
+        send.sendToDood(UserID,`账号:${response[0].account}\r\n密码:${response[0].password}`,data.access_token);
     };
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
@@ -155,7 +154,7 @@ exports.queryAssociation = function (UserID){
 //返回有多少个收取邮件
 exports.emilNumber = function (UserID){
     const fun=function(response){
-        send.sendToDood(UserID,'邮件收取数: ' + response.length,data.access_token);
+        send.sendToDood(UserID,`邮件收取数:${response.length}`,data.access_token);
     };
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
@@ -199,6 +198,7 @@ exports.timedTask = function(UserID){
         const timeoutTime = 60000*data.timeoutTime;
         //定时收取邮件的核心内容
         const loop = function(){
+            console.log("1");
             const fun=function(response){
                 if(response[0]){
                     response.forEach(function (filename) {

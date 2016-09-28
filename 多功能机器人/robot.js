@@ -13,7 +13,7 @@ function echo(UserID,ReceiveMessage){
         res.setEncoding('utf8');
         res.on('data',function(chunk) {send.sendToDood(UserID,JSON.parse(chunk).text,data.access_token);});
     });
-    getreq.on('error',function(e) {console.log('problem with request: ' + e.message);});
+    getreq.on('error',function(e) {console.log( `请求过程中发生错误:${e.message}`);});
     getreq.end();
 }
 
@@ -36,21 +36,23 @@ const server = function(request, response) {
         request.addListener("data",function(postchunk) { postdata += postchunk;});
         request.addListener("end",function() {
             const Receive = JSON.parse(query.parse(postdata).msg);
-            console.log(query.parse(postdata));
-            const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message.body, Receive.receTargetID];
-            if(receTargetID === "4328613733") {
-                //显示谁发来了什么消息
-                console.log(UserID + "发来消息：" + ReceiveMessage);
-                switch(ReceiveMessage){
-                    case "收邮件":mail.emilUser(UserID);break;
-                    case "邮件收取数量":mail.emilNumber(UserID);break;
-                    case "查询关联":mail.queryAssociation(UserID);break;
-                    case "解除关联":mail.relieveAssociation(UserID);break;
-                    case "定时开关":mail.timedTask(UserID);break;
-                    default:otherCommand(ReceiveMessage,UserID);
+            //收到奇怪的消息屏蔽掉
+            if(Receive.message.body){
+                const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message.body, Receive.receTargetID];
+                if(receTargetID === "4328613733") {
+                    //显示谁发来了什么消息
+                    console.log(`${UserID}发来消息：${ReceiveMessage}`);
+                    switch(ReceiveMessage){
+                        case "收邮件":mail.emilUser(UserID);break;
+                        case "邮件收取数量":mail.emilNumber(UserID);break;
+                        case "查询关联":mail.queryAssociation(UserID);break;
+                        case "解除关联":mail.relieveAssociation(UserID);break;
+                        case "定时开关":mail.timedTask(UserID);break;
+                        default:otherCommand(ReceiveMessage,UserID);
+                    }
                 }
+                response.end();
             }
-            response.end();
         });
     }
 };
