@@ -83,10 +83,10 @@ function receive(UserID,account,password,beSureToRemind) {
         function openInbox(cb) {imap.openBox('INBOX', true, cb);}
         imap.once('ready', function () {
             openInbox(function (err) {
-                if (err) send.sendToDood(UserID,`发生错误：${err}`,data.access_token);
+                if (err) send.sendToDood(UserID,`发生错误1：${err}`,data.access_token);
                 else{
                     imap.search(["UNSEEN"], function (err, results) {
-                        if (err) send.sendToDood(UserID,`发生错误：${err}`,data.access_token);
+                        if (err) send.sendToDood(UserID,`发生错误2：${err}`,data.access_token);
                         else{
                             let mailNumber = results.length;
                             let sendMessage = `未读邮件数：${mailNumber}\r\n----------------------------------\r\n`;
@@ -104,7 +104,15 @@ function receive(UserID,account,password,beSureToRemind) {
                 }
             });
         });
-        imap.once('error', function (err) { send.sendToDood(UserID,`发生错误：${err}`,data.access_token);});
+        imap.once('error', function (err) { 
+            const message = err +``;
+            if(message.indexOf(data.qqAuthorizedCode)>-1){
+                send.sendToDood(UserID,data.qqAuthorized,data.access_token);
+            }
+            else{
+                send.sendToDood(UserID,`发生错误3：${err}`,data.access_token);
+            }
+        });
         imap.connect();
     }
     receive_mail();
@@ -134,7 +142,8 @@ exports.relieveAssociation = function (UserID){
                 if(err!==null) send.sendToDood(UserID,err,data.access_token);
                 else{
                     collection.remove({"UserID":UserID},{safe:true},function(err,result){
-                        send.sendToDood(UserID,result,data.access_token);
+                        if(err)send.sendToDood(UserID,data.releaseAssociatedError,data.access_token);
+                        else send.sendToDood(UserID,data.releaseAssociatedOK,data.access_token);
                     });
                     dataBase.close();
                 }
@@ -146,7 +155,12 @@ exports.relieveAssociation = function (UserID){
 //返回豆豆ID绑定的邮箱账户和密码
 exports.queryAssociation = function (UserID){
     const fun=function(response){
-        send.sendToDood(UserID,`账号:${response[0].account}\r\n密码:${response[0].password}`,data.access_token);
+        if(response[0]){
+            send.sendToDood(UserID,`账号:${response[0].account}\r\n密码:${response[0].password}`,data.access_token);
+        }
+        else{
+            send.sendToDood(UserID,`没有绑定任何邮箱！`,data.access_token);
+        }
     };
     findMongoDB(UserID,{"UserID":UserID},fun);
 };
@@ -169,12 +183,12 @@ exports.addEmilUser = function (UserID,account,password){
                 if(err!==null) {send.sendToDood(UserID,err,data.access_token);}
                 else{
                     //加密存储密码
-                    password = CryptoJS.AES.encrypt(password,data.key).toString();
-                    const mailJson = {"UserID":UserID,"account":account,"password":password,"subscribe":"yes"};
+                    const passwordAES = CryptoJS.AES.encrypt(password,data.key).toString();
+                    const mailJson = {"UserID":UserID,"account":account,"password":passwordAES,"subscribe":"yes"};
                     collection.find(mailJson).toArray(function(err,docs){
                         if(!docs[0]){
-                            collection.insert(mailJson,{safe:true},function(err, result){
-                                console.log(result);
+                            collection.insert(mailJson,{safe:true},function(err){
+                                if(!err) receive(UserID,account,password,true);
                             });
                         }
                         dataBase.close();
@@ -183,8 +197,6 @@ exports.addEmilUser = function (UserID,account,password){
             });
         }
     });
-    findMongoDB(UserID);
-    receive(UserID,account,password);
 };
 
 exports.timedTask = function(UserID){
@@ -198,7 +210,6 @@ exports.timedTask = function(UserID){
         const timeoutTime = 60000*data.timeoutTime;
         //定时收取邮件的核心内容
         const loop = function(){
-            console.log("1");
             const fun=function(response){
                 if(response[0]){
                     response.forEach(function (filename) {

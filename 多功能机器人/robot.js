@@ -20,9 +20,14 @@ function echo(UserID,ReceiveMessage){
 //收到其他命令的判断
 function otherCommand(ReceiveMessage,UserID){
     if (ReceiveMessage.indexOf("##")>-1){
-        const account = ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
-        const password = ReceiveMessage.substring(ReceiveMessage.indexOf("##")+2);
-        mail.addEmilUser(UserID,account,password);
+        if(ReceiveMessage.indexOf("@")>-1){
+            const account = ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
+            const password = ReceiveMessage.substring(ReceiveMessage.indexOf("##")+2);
+            mail.addEmilUser(UserID,account,password);
+        }
+        else{
+            send.sendToDood(UserID,data.mailboxFormatIsNotCorrect,data.access_token);
+        }
     }
     else echo(UserID,ReceiveMessage);
 }
@@ -37,7 +42,7 @@ const server = function(request, response) {
         request.addListener("end",function() {
             const Receive = JSON.parse(query.parse(postdata).msg);
             //收到奇怪的消息屏蔽掉
-            if(Receive.message.body){
+            if(Receive.message&&Receive.message.body){
                 const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message.body, Receive.receTargetID];
                 if(receTargetID === "4328613733") {
                     //显示谁发来了什么消息
@@ -48,10 +53,23 @@ const server = function(request, response) {
                         case "查询关联":mail.queryAssociation(UserID);break;
                         case "解除关联":mail.relieveAssociation(UserID);break;
                         case "定时开关":mail.timedTask(UserID);break;
+                        case "如何绑定邮箱":send.sendToDood(UserID,data.howToBind,data.access_token);break;
                         default:otherCommand(ReceiveMessage,UserID);
                     }
                 }
                 response.end();
+            }
+            else{
+                response.write("豆豆机器人！");
+                response.end();
+                console.log(Receive);
+                const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message, Receive.receTargetID];
+                switch(ReceiveMessage){
+                    case "emilUser":mail.emilUser(UserID);break;
+                    case "queryAssociation":mail.queryAssociation(UserID);break;
+                    case "relieveAssociation":mail.relieveAssociation(UserID);break;
+                    case "howToBind":send.sendToDood(UserID,data.howToBind,data.access_token);break;
+                }
             }
         });
     }
