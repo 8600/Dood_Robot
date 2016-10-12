@@ -11,7 +11,18 @@ function echo(UserID,ReceiveMessage){
     const tulingAPI={hostname: data.tuLingHost ,port: 80,path: data.tuLingPath + UserID + '&info=' + encodeURI(ReceiveMessage),method: 'GET'};
     const getreq = http.request(tulingAPI,function(res) {
         res.setEncoding('utf8');
-        res.on('data',function(chunk) {send.sendToDood(UserID,JSON.parse(chunk).text,data.access_token);});
+        res.on('data',function(chunk) {
+            let item = "";
+            const message = JSON.parse(chunk);
+            switch (message.code) {
+                //普通消息
+                case 100000: send.sendToDood(UserID,message.text,data.access_token);break;
+                //热门电影
+                case 308000: message.list.forEach(function (element) { item += `${element.name}---${element.info}\r\n`; }, this); send.sendToDood(UserID, `亲，已帮您找到电影信息:\r\n${item}`, data.access_token); break;
+                //热门新闻
+                case 302000: message.list.forEach(function (element) { item += `${element.article}\r\n`; }, this); send.sendToDood(UserID, `亲，已帮您找到新闻信息:\r\n${item}`, data.access_token); break;
+            }
+        });
     });
     getreq.on('error',function(e) {console.log( `请求过程中发生错误:${e.message}`);});
     getreq.end();
@@ -19,6 +30,7 @@ function echo(UserID,ReceiveMessage){
 
 //收到其他命令的判断
 function otherCommand(ReceiveMessage,UserID){
+    //如果包含##进入邮箱模式 否则智能对话
     if (ReceiveMessage.indexOf("##")>-1){
         if(ReceiveMessage.indexOf("@")>-1){
             const account = ReceiveMessage.substring(0,ReceiveMessage.indexOf("##"));
@@ -60,15 +72,18 @@ const server = function(request, response) {
                 response.end();
             }
             else{
-                response.write("豆豆机器人！");
                 response.end();
-                console.log(Receive);
-                const [UserID,ReceiveMessage,receTargetID]=[Receive.sendUserID, Receive.message, Receive.receTargetID];
+                const [UserID,ReceiveMessage]=[Receive.sendUserID, Receive.message];
                 switch(ReceiveMessage){
                     case "emilUser":mail.emilUser(UserID);break;
                     case "queryAssociation":mail.queryAssociation(UserID);break;
                     case "relieveAssociation":mail.relieveAssociation(UserID);break;
                     case "howToBind":send.sendToDood(UserID,data.howToBind,data.access_token);break;
+                    case "command":send.sendToDood(UserID,data.command,data.access_token);break;
+                    case "joke":echo(UserID,"讲个笑话");break;
+                    case "story":echo(UserID,"讲个故事");break;
+                    case "news":echo(UserID,"今日新闻");break;
+                    case "movie":echo(UserID,"最近热门电影");break;
                 }
             }
         });

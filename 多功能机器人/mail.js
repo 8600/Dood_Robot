@@ -141,7 +141,7 @@ exports.relieveAssociation = function (UserID){
             dataBase.createCollection('mailRobot', {safe:true}, function(err, collection){
                 if(err!==null) send.sendToDood(UserID,err,data.access_token);
                 else{
-                    collection.remove({"UserID":UserID},{safe:true},function(err,result){
+                    collection.remove({"UserID":UserID},{safe:true},function(err){
                         if(err)send.sendToDood(UserID,data.releaseAssociatedError,data.access_token);
                         else send.sendToDood(UserID,data.releaseAssociatedOK,data.access_token);
                     });
