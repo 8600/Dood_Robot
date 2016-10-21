@@ -23,9 +23,21 @@ const server = function(request,response){
             postdata += postchunk;
         });
         request.addListener("end",function(){
+            postdata = postdata.replace(/%0A/g,"");
+			postdata = postdata.replace(/%0a/g,"");
+			postdata = postdata.replace(/%0D/g,"");
+			postdata = postdata.replace(/%0d/g,"");
+			console.log(postdata);
+			let post = "false";
             const Receive = JSON.parse(Query.parse(postdata).msg);
-            const [UserID,ReceiveMessage]=[Receive.receTargetID, Receive.message ];
-            sendToDood(UserID,ReceiveMessage);
+			if(Receive){
+				const [UserID,ReceiveMessage]=[Receive.receTargetID, Receive.message ];
+				if(UserID&&ReceiveMessage){
+					post="ture";
+					sendToDood(UserID,ReceiveMessage);
+				}
+			}
+			response.write(post);
             response.end();
         });
     }
