@@ -27,18 +27,27 @@ const server = function(request,response){
 			postdata = postdata.replace(/%0a/g,"");
 			postdata = postdata.replace(/%0D/g,"");
 			postdata = postdata.replace(/%0d/g,"");
+            postdata = postdata.replace(/%09/g,"");
 			console.log(postdata);
 			let post = "false";
-            const Receive = JSON.parse(Query.parse(postdata).msg);
-			if(Receive){
-				const [UserID,ReceiveMessage]=[Receive.receTargetID, Receive.message ];
-				if(UserID&&ReceiveMessage){
-					post="ture";
-					sendToDood(UserID,ReceiveMessage);
-				}
-			}
-			response.write(post);
-            response.end();
+            try {
+                const Receive = JSON.parse(Query.parse(postdata).msg);
+			    if(Receive){
+				    const [UserID,ReceiveMessage]=[Receive.receTargetID, Receive.message ];
+				    if(UserID&&ReceiveMessage){
+					    post="ture";
+					    sendToDood(UserID,ReceiveMessage);
+				    }
+			    }
+                response.write(post);
+                response.end();
+            }
+            catch(e){
+                response.write("数据出现未知编码！");
+                response.end();
+            }
+            
+			
         });
     }
 };
